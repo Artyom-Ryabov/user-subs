@@ -1,0 +1,64 @@
+networks:
+  service-db:
+    driver: bridge
+
+services:
+  db:
+    container_name: db
+    image: postgres
+    networks:
+      - service-db
+    restart: always
+    expose:
+      - ${DB_PORT}
+    environment:
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_PSWD}
+        POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    # command: -f '/db/initdb/init_usersubs_db.sql'
+    volumes:
+      # - ./db/data:/var/lib/postgresql/data:rw
+        # - /var/lib/postgresql
+        - ./db/initdb/init_usersubs_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # - ./db/initdb/init_usersubs_db.sql:/db/initdb/init_usersubs_db.sql:ro
+
+  migration:
+    container_name: migration
+    image: ghcr.io/kukymbr/goose-docker
+    networks:
+      - service-db
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: "host=db port=${DB_PSWD} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
+    command: up
+    volumes:
+      - ./db/migrations:/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    container_name: app
+    networks:
+      - service-db
+    build: .
+    ports:
+      - "5500:3000"
+    environment:
+      SERVER_PORT: 3000
+      DB_CONNECTION: "host=db port=${DB_PORT} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
+    depends_on:
+      - migration
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+        - action: rebuild
+          path: .
+          target: /app

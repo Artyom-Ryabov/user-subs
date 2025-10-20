@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS "UserSubs";
-
 CREATE DATABASE "UserSubs"
     OWNER postgres
     TEMPLATE 'template0'

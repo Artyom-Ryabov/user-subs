@@ -1,11 +1,9 @@
-package main
+package utils
 
 import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const format = "01-2006"
@@ -32,11 +30,4 @@ func (t *JSONDate) UnmarshalJSON(b []byte) error {
 
 	t.Time = time
 	return nil
-}
-
-type Sub struct {
-	ServiceName string    `json:"service_name"`
-	Price       int32     `josn:"price"`
-	UserID      uuid.UUID `json:"user_id"`
-	StartedAt   JSONDate  `json:"start_date"`
 }

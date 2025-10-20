@@ -1,0 +1,108 @@
+basePath: /
+definitions:
+  subs.sub:
+    properties:
+      price:
+        type: integer
+      service_name:
+        type: string
+      start_date:
+        $ref: '#/definitions/utils.JSONDate'
+      user_id:
+        type: string
+    type: object
+  utils.JSONDate:
+    properties:
+      time.Time:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: User subscriptions API
+  version: "1"
+paths:
+  /api/sub:
+    delete:
+      description: Delete a subscription
+      parameters:
+      - description: ID of subscription
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: DeleteSub
+    get:
+      description: Get a subscription by ID
+      parameters:
+      - description: ID (int) of specific subscription
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: GetSub
+    post:
+      consumes:
+      - application/json
+      description: Create a subscription
+      parameters:
+      - description: Structure of new subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/subs.sub'
+      produces:
+      - application/json
+      responses: {}
+      summary: PostSub
+    put:
+      consumes:
+      - application/json
+      description: Update a subscription
+      parameters:
+      - description: ID of subscription
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Structure of subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/subs.sub'
+      produces:
+      - application/json
+      responses: {}
+      summary: PutSub
+  /api/subs:
+    delete:
+      description: Delete all subscriptions of specific user
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: DeleteUserSubs
+    get:
+      description: Get all subscriptions
+      parameters:
+      - description: User ID, if need to get all subscriptions of a specific user
+        in: query
+        name: user_id
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: GetSubs
+swagger: "2.0"

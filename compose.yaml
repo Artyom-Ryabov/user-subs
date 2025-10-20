@@ -20,12 +20,8 @@ services:
       interval: 1s
       timeout: 5s
       retries: 10
-    # command: -f '/db/initdb/init_usersubs_db.sql'
     volumes:
-      # - ./db/data:/var/lib/postgresql/data:rw
-        # - /var/lib/postgresql
         - ./db/initdb/init_usersubs_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      # - ./db/initdb/init_usersubs_db.sql:/db/initdb/init_usersubs_db.sql:ro
 
   migration:
     container_name: migration
@@ -34,10 +30,10 @@ services:
       - service-db
     environment:
       GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: "host=db port=${DB_PSWD} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
+      GOOSE_DBSTRING: "host=db port=${DB_PORT} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
     command: up
     volumes:
-      - ./db/migrations:/migrations:ro
+      - ./migrations:/migrations:ro
     depends_on:
       db:
         condition: service_healthy
@@ -48,9 +44,9 @@ services:
       - service-db
     build: .
     ports:
-      - "5500:3000"
+      - "5500:5500"
     environment:
-      SERVER_PORT: 3000
+      SERVER_PORT: 5500
       DB_CONNECTION: "host=db port=${DB_PORT} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
     depends_on:
       - migration

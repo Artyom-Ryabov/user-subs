@@ -1,8 +1,8 @@
 DB_CONNECTION="postgres://postgres:admin@localhost:5432/UserSubs"
-MIGRATIONS=./db/migrations
+MIGRATIONS=./migrations
 
 run:
-	go run .
+	go run ./cmd/main.go
 
 sqlc:
 	sqlc generate -f ./db/queries/sqlc.yaml

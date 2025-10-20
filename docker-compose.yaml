@@ -46,7 +46,7 @@ services:
     ports:
       - "5500:5500"
     environment:
-      SERVER_PORT: 5500
+      SERVER_PORT: "5500"
       DB_CONNECTION: "host=db port=${DB_PORT} user=${DB_USER} password=${DB_PSWD} dbname=${DB_NAME} sslmode=disable"
     depends_on:
       - migration

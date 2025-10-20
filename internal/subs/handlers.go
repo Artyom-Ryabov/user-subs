@@ -43,7 +43,7 @@ func (h SubsHandler) GetSubs(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error: could not parse url query"))
-			log.Printf("Error: could not parse url query - %v", err)
+			log.Printf("Error: could not parse url query - %v\n", err)
 			return
 		}
 
@@ -55,14 +55,14 @@ func (h SubsHandler) GetSubs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(subs); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v", err)
+		log.Printf("Error: something went wrong on encoding json - %v\n", err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (h SubsHandler) GetSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v", err)
+		log.Printf("Error: could not parse path value - %v\n", err)
 		return
 	}
 
@@ -91,14 +91,14 @@ func (h SubsHandler) GetSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(sub); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v", err)
+		log.Printf("Error: something went wrong on encoding json - %v\n", err)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h SubsHandler) PostSub(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on decoding json"))
-		log.Printf("Error: something went wrong on decoding json - %v", err)
+		log.Printf("Error: something went wrong on decoding json - %v\n", err)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h SubsHandler) PostSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h SubsHandler) PutSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v", err)
+		log.Printf("Error: could not parse path value - %v\n", err)
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h SubsHandler) PutSub(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on decoding json"))
-		log.Printf("Error: something went wrong on decoding json - %v", err)
+		log.Printf("Error: something went wrong on decoding json - %v\n", err)
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h SubsHandler) PutSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
@@ -202,7 +202,7 @@ func (h SubsHandler) DeleteSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v", err)
+		log.Printf("Error: could not parse path value - %v\n", err)
 		return
 	}
 
@@ -210,7 +210,7 @@ func (h SubsHandler) DeleteSub(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
@@ -238,7 +238,7 @@ func (h SubsHandler) DeleteUserSubs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: could not parse url query"))
-		log.Printf("Error: could not parse url query - %v", err)
+		log.Printf("Error: could not parse url query - %v\n", err)
 		return
 	}
 
@@ -247,14 +247,14 @@ func (h SubsHandler) DeleteUserSubs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v", err)
+		log.Printf("Error: something went wrong on sql query - %v\n", err)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(ids); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v", err)
+		log.Printf("Error: something went wrong on encoding json - %v\n", err)
 		return
 	}
 

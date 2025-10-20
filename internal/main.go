@@ -17,9 +17,10 @@ import (
 )
 
 func Start() error {
-	err := godotenv.Load()
-	if err != nil {
-		return fmt.Errorf("Error: something wrong with getting .env - %v", err)
+	log.SetPrefix("[INFO]: ")
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Error: something wrong with getting .env - %v\n", err)
+		log.Printf("Trying to get environment variables not from .env\n")
 	}
 
 	query, err := startDB()
@@ -52,7 +53,6 @@ func startDB() (*db.Queries, error) {
 }
 
 func startServer(query *db.Queries) error {
-	log.SetPrefix("[INFO]: ")
 	port, exist := os.LookupEnv("SERVER_PORT")
 	if !exist {
 		return errors.New("Error: cant get field PORT from .env")

@@ -17,9 +17,9 @@ import (
 )
 
 func Start() error {
-	err := godotenv.Load(".env")
+	err := godotenv.Load()
 	if err != nil {
-		return errors.New("Error: something wrong with getting .env")
+		return fmt.Errorf("Error: something wrong with getting .env - %v", err)
 	}
 
 	query, err := startDB()

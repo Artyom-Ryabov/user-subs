@@ -12,3 +12,6 @@ goose_up:
 
 goose_down: 
 	goose postgres ${DB_CONNECTION} down -dir ${MIGRATIONS}
+
+swagger:
+	swag i -g ./cmd/main.go

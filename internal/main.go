@@ -67,6 +67,7 @@ func startServer(query *db.Queries) error {
 	handler := subs.SubsHandler{SubsRepo: query}
 
 	mux.HandleFunc("GET /api/subs", handler.GetSubs)
+	mux.HandleFunc("GET /api/sub/{id}", handler.GetSub)
 	mux.HandleFunc("POST /api/sub", handler.PostSub)
 	mux.HandleFunc("PUT /api/sub/{id}", handler.PutSub)
 	mux.HandleFunc("DELETE /api/sub/{id}", handler.DeleteSub)

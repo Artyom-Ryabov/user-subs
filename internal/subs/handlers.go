@@ -2,8 +2,9 @@ package subs
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,11 +15,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type sub struct {
+type subJSON struct {
+	ID          int32          `json:"id,omitempty"`
 	ServiceName string         `json:"service_name"`
-	Price       int32          `josn:"price"`
+	Price       int32          `json:"price"`
 	UserID      uuid.UUID      `json:"user_id"`
 	StartedAt   utils.JSONDate `json:"start_date"`
+	EndedAt     utils.JSONDate `json:"end_date,omitzero"`
 }
 
 type SubsHandler struct {
@@ -33,92 +36,93 @@ type SubsHandler struct {
 func (h SubsHandler) GetSubs(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET /api/subs - Receive request")
 	var (
-		subs []db.Subscription
-		err  error
+		subsDB []db.Subscription
+		err    error
 	)
 
 	user_id := r.URL.Query().Get("user_id")
 	if user_id != "" {
 		id, err := uuid.Parse(user_id)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error: could not parse url query"))
-			log.Printf("Error: could not parse url query - %v\n", err)
+			utils.SendError(w, "Error: could not parse url query", http.StatusInternalServerError, err)
 			return
 		}
 
-		subs, err = h.SubsRepo.GetUserSubs(context.Background(), id)
+		subsDB, err = h.SubsRepo.GetUserSubs(context.Background(), id)
 	} else {
-		subs, err = h.SubsRepo.GetSubs(context.Background())
+		subsDB, err = h.SubsRepo.GetSubs(context.Background())
 	}
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(subs); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v\n", err)
-		return
+	subs := []subJSON{}
+	for _, sub := range subsDB {
+		subs = append(subs, subJSON{
+			ID:          sub.ID,
+			ServiceName: sub.ServiceName,
+			Price:       sub.Price,
+			UserID:      sub.UserID,
+			StartedAt:   utils.JSONDate(sub.StartedAt),
+			EndedAt:     utils.JSONDate(sub.EndedAt.Time),
+		})
 	}
 
-	w.WriteHeader(http.StatusOK)
-	log.Printf("GET /api/subs - Send response - %v\n", subs)
+	if err := utils.SendData(w, subs, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // @Summary GetSub
 // @Description Get a subscription by ID
 // @Produce json
 // @Param id path int true "ID (int) of specific subscription"
-// @Router /api/sub [GET]
+// @Router /api/sub/{id} [GET]
 func (h SubsHandler) GetSub(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET /api/sub/{id} - Receive request")
 
 	pathID := r.PathValue("id")
 	subID, err := strconv.ParseInt(pathID, 10, 32)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v\n", err)
+		utils.SendError(w, "Error: could not parse path value", http.StatusInternalServerError, err)
 		return
 	}
 
 	sub, err := h.SubsRepo.GetSub(context.Background(), int32(subID))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(sub); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v\n", err)
-		return
+	s := subJSON{
+		ID:          int32(subID),
+		ServiceName: sub.ServiceName,
+		Price:       sub.Price,
+		UserID:      sub.UserID,
+		StartedAt:   utils.JSONDate(sub.StartedAt),
+		EndedAt:     utils.JSONDate(sub.EndedAt.Time),
 	}
 
-	w.WriteHeader(http.StatusOK)
-	log.Printf("GET /api/sub - Send response - %v\n", sub)
+	if err := utils.SendData(w, s, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // @Summary PostSub
 // @Description Create a subscription
 // @Accept json
 // @Produce json
-// @Param request body sub true "Structure of new subscription"
+// @Param request body subJSON true "Structure of new subscription"
 // @Router /api/sub [POST]
 func (h SubsHandler) PostSub(w http.ResponseWriter, r *http.Request) {
 	log.Println("POST /api/sub - Receive request")
-	var sub sub
+	var sub subJSON
 	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on decoding json"))
-		log.Printf("Error: something went wrong on decoding json - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on decoding json", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -126,20 +130,22 @@ func (h SubsHandler) PostSub(w http.ResponseWriter, r *http.Request) {
 		ServiceName: sub.ServiceName,
 		Price:       sub.Price,
 		UserID:      sub.UserID,
-		StartedAt:   sub.StartedAt.Time,
+		StartedAt:   time.Time(sub.StartedAt),
+		EndedAt:     sql.NullTime{Time: time.Time(sub.EndedAt), Valid: true},
 	}
 
 	id, err := h.SubsRepo.AddSub(context.Background(), params)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Added new Subscription with id = %v", id)))
-	log.Printf("POST /api/sub - Send response - %v\n", id)
+	sub.ID = id
+
+	if err := utils.SendData(w, sub, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // @Summary PutSub
@@ -147,24 +153,20 @@ func (h SubsHandler) PostSub(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID of subscription"
-// @Param request body sub true "Structure of subscription"
-// @Router /api/sub [PUT]
+// @Param request body subJSON true "Structure of subscription"
+// @Router /api/sub/{id} [PUT]
 func (h SubsHandler) PutSub(w http.ResponseWriter, r *http.Request) {
 	log.Println("PUT /api/sub/{id} - Receive request")
 	pathID := r.PathValue("id")
 	subID, err := strconv.ParseInt(pathID, 10, 32)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v\n", err)
+		utils.SendError(w, "Error: could not parse path value", http.StatusInternalServerError, err)
 		return
 	}
 
-	var sub sub
+	var sub subJSON
 	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on decoding json"))
-		log.Printf("Error: something went wrong on decoding json - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on decoding json", http.StatusInternalServerError, err)
 		return
 	}
 
@@ -173,50 +175,49 @@ func (h SubsHandler) PutSub(w http.ResponseWriter, r *http.Request) {
 		ServiceName: sub.ServiceName,
 		Price:       sub.Price,
 		UserID:      sub.UserID,
-		StartedAt:   sub.StartedAt.Time,
+		StartedAt:   time.Time(sub.StartedAt),
+		EndedAt:     sql.NullTime{Time: time.Time(sub.EndedAt), Valid: true},
 		UpdatedAt:   time.Now(),
 	}
 
 	id, err := h.SubsRepo.UpdateSub(context.Background(), params)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Updated Subscription with id = %v", id)))
-	log.Printf("PUT /api/sub/{id} - Send response - %v\n", id)
+	sub.ID = id
+
+	if err := utils.SendData(w, sub, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // @Summary DeleteSub
 // @Description Delete a subscription
 // @Produce json
 // @Param id path int true "ID of subscription"
-// @Router /api/sub [DELETE]
+// @Router /api/sub/{id} [DELETE]
 func (h SubsHandler) DeleteSub(w http.ResponseWriter, r *http.Request) {
 	log.Println("DELETE /api/sub/{id} - Receive request")
 	pathID := r.PathValue("id")
 	subID, err := strconv.ParseInt(pathID, 10, 32)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: could not parse path value"))
-		log.Printf("Error: could not parse path value - %v\n", err)
+		utils.SendError(w, "Error: could not parse path value", http.StatusInternalServerError, err)
 		return
 	}
 
 	id, err := h.SubsRepo.DeleteSub(context.Background(), int32(subID))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Deleted Subscription with id = %v", id)))
-	log.Printf("DELETE /api/sub/{id} - Send response - %v\n", id)
+	if err := utils.SendData(w, id, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // @Summary DeleteUserSubs
@@ -228,36 +229,25 @@ func (h SubsHandler) DeleteUserSubs(w http.ResponseWriter, r *http.Request) {
 	log.Println("DELETE /api/subs - Receive request")
 	user_id := r.URL.Query().Get("user_id")
 	if user_id == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Error: query param `user_id` is not provided"))
-		log.Println("Error: query param `user_id` is not provided")
+		utils.SendError(w, "Error: query param `user_id` is not provided", http.StatusBadRequest, errors.New("no user_id"))
 		return
 	}
 
 	id, err := uuid.Parse(user_id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: could not parse url query"))
-		log.Printf("Error: could not parse url query - %v\n", err)
+		utils.SendError(w, "Error: could not parse url query", http.StatusInternalServerError, err)
 		return
 	}
 
 	ids, err := h.SubsRepo.DeleteUserSubs(context.Background(), id)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on sql query"))
-		log.Printf("Error: something went wrong on sql query - %v\n", err)
+		utils.SendError(w, "Error: something went wrong on sql query", http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(ids); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error: something went wrong on encoding json"))
-		log.Printf("Error: something went wrong on encoding json - %v\n", err)
+	if err := utils.SendData(w, ids, http.StatusOK); err != nil {
+		utils.SendError(w, "Error: something went wrong on encoding json", http.StatusInternalServerError, err)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	log.Printf("DELETE /api/subs - Send response - %v\n", ids)
 }

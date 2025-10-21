@@ -1,19 +1,18 @@
 basePath: /
 definitions:
-  subs.sub:
+  subs.subJSON:
     properties:
+      end_date:
+        type: string
+      id:
+        type: integer
       price:
         type: integer
       service_name:
         type: string
       start_date:
-        $ref: '#/definitions/utils.JSONDate'
-      user_id:
         type: string
-    type: object
-  utils.JSONDate:
-    properties:
-      time.Time:
+      user_id:
         type: string
     type: object
 info:
@@ -22,6 +21,22 @@ info:
   version: "1"
 paths:
   /api/sub:
+    post:
+      consumes:
+      - application/json
+      description: Create a subscription
+      parameters:
+      - description: Structure of new subscription
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/subs.subJSON'
+      produces:
+      - application/json
+      responses: {}
+      summary: PostSub
+  /api/sub/{id}:
     delete:
       description: Delete a subscription
       parameters:
@@ -46,21 +61,6 @@ paths:
       - application/json
       responses: {}
       summary: GetSub
-    post:
-      consumes:
-      - application/json
-      description: Create a subscription
-      parameters:
-      - description: Structure of new subscription
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/subs.sub'
-      produces:
-      - application/json
-      responses: {}
-      summary: PostSub
     put:
       consumes:
       - application/json
@@ -76,7 +76,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/subs.sub'
+          $ref: '#/definitions/subs.subJSON'
       produces:
       - application/json
       responses: {}

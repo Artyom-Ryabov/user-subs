@@ -8,13 +8,13 @@ import (
 
 const format = "01-2006"
 
-type JSONDate struct{ time.Time }
+type JSONDate time.Time
 
 func (t JSONDate) MarshalJSON() ([]byte, error) {
-	if t.Time.IsZero() {
+	if time.Time(t).IsZero() {
 		return nil, nil
 	}
-	return []byte(fmt.Sprintf(`"%s"`, t.Time.Format(format))), nil
+	return []byte(fmt.Sprintf(`"%s"`, time.Time(t).Format(format))), nil
 }
 
 func (t *JSONDate) UnmarshalJSON(b []byte) error {
@@ -28,6 +28,6 @@ func (t *JSONDate) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	t.Time = time
+	*t = JSONDate(time)
 	return nil
 }

@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,12 +18,14 @@ INSERT INTO subscriptions (
     service_name,
     price,
     user_id,
-    started_at
+    started_at,
+    ended_at
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 ) RETURNING id
 `
 
@@ -31,6 +34,7 @@ type AddSubParams struct {
 	Price       int32
 	UserID      uuid.UUID
 	StartedAt   time.Time
+	EndedAt     sql.NullTime
 }
 
 func (q *Queries) AddSub(ctx context.Context, arg AddSubParams) (int32, error) {
@@ -39,6 +43,7 @@ func (q *Queries) AddSub(ctx context.Context, arg AddSubParams) (int32, error) {
 		arg.Price,
 		arg.UserID,
 		arg.StartedAt,
+		arg.EndedAt,
 	)
 	var id int32
 	err := row.Scan(&id)
@@ -83,7 +88,7 @@ func (q *Queries) DeleteUserSubs(ctx context.Context, userID uuid.UUID) ([]int32
 }
 
 const getSub = `-- name: GetSub :one
-SELECT id, service_name, price, user_id, started_at, created_at, updated_at FROM subscriptions WHERE id = $1
+SELECT id, service_name, price, user_id, started_at, created_at, updated_at, ended_at FROM subscriptions WHERE id = $1
 `
 
 func (q *Queries) GetSub(ctx context.Context, id int32) (Subscription, error) {
@@ -97,12 +102,13 @@ func (q *Queries) GetSub(ctx context.Context, id int32) (Subscription, error) {
 		&i.StartedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EndedAt,
 	)
 	return i, err
 }
 
 const getSubs = `-- name: GetSubs :many
-SELECT id, service_name, price, user_id, started_at, created_at, updated_at FROM subscriptions
+SELECT id, service_name, price, user_id, started_at, created_at, updated_at, ended_at FROM subscriptions
 `
 
 func (q *Queries) GetSubs(ctx context.Context) ([]Subscription, error) {
@@ -122,6 +128,7 @@ func (q *Queries) GetSubs(ctx context.Context) ([]Subscription, error) {
 			&i.StartedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -137,7 +144,7 @@ func (q *Queries) GetSubs(ctx context.Context) ([]Subscription, error) {
 }
 
 const getUserSubs = `-- name: GetUserSubs :many
-SELECT id, service_name, price, user_id, started_at, created_at, updated_at FROM subscriptions WHERE user_id = $1
+SELECT id, service_name, price, user_id, started_at, created_at, updated_at, ended_at FROM subscriptions WHERE user_id = $1
 `
 
 func (q *Queries) GetUserSubs(ctx context.Context, userID uuid.UUID) ([]Subscription, error) {
@@ -157,6 +164,7 @@ func (q *Queries) GetUserSubs(ctx context.Context, userID uuid.UUID) ([]Subscrip
 			&i.StartedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EndedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -177,8 +185,9 @@ UPDATE subscriptions SET
     price = $2,
     user_id = $3,
     started_at = $4,
-    updated_at = $5
-WHERE id = $6 RETURNING id
+    ended_at = $5,
+    updated_at = $6
+WHERE id = $7 RETURNING id
 `
 
 type UpdateSubParams struct {
@@ -186,6 +195,7 @@ type UpdateSubParams struct {
 	Price       int32
 	UserID      uuid.UUID
 	StartedAt   time.Time
+	EndedAt     sql.NullTime
 	UpdatedAt   time.Time
 	ID          int32
 }
@@ -196,6 +206,7 @@ func (q *Queries) UpdateSub(ctx context.Context, arg UpdateSubParams) (int32, er
 		arg.Price,
 		arg.UserID,
 		arg.StartedAt,
+		arg.EndedAt,
 		arg.UpdatedAt,
 		arg.ID,
 	)

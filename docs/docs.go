@@ -16,6 +16,30 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/sub": {
+            "post": {
+                "description": "Create a subscription",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "PostSub",
+                "parameters": [
+                    {
+                        "description": "Structure of new subscription",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/subs.subJSON"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/sub/{id}": {
             "get": {
                 "description": "Get a subscription by ID",
                 "produces": [
@@ -56,29 +80,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/subs.sub"
-                        }
-                    }
-                ],
-                "responses": {}
-            },
-            "post": {
-                "description": "Create a subscription",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "PostSub",
-                "parameters": [
-                    {
-                        "description": "Structure of new subscription",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/subs.sub"
+                            "$ref": "#/definitions/subs.subJSON"
                         }
                     }
                 ],
@@ -139,9 +141,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "subs.sub": {
+        "subs.subJSON": {
             "type": "object",
             "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
                 "price": {
                     "type": "integer"
                 },
@@ -149,17 +157,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "start_date": {
-                    "$ref": "#/definitions/utils.JSONDate"
+                    "type": "string"
                 },
                 "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "utils.JSONDate": {
-            "type": "object",
-            "properties": {
-                "time.Time": {
                     "type": "string"
                 }
             }

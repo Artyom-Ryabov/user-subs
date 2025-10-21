@@ -12,12 +12,14 @@ INSERT INTO subscriptions (
     service_name,
     price,
     user_id,
-    started_at
+    started_at,
+    ended_at
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 ) RETURNING id;
 
 -- name: UpdateSub :one
@@ -26,8 +28,9 @@ UPDATE subscriptions SET
     price = $2,
     user_id = $3,
     started_at = $4,
-    updated_at = $5
-WHERE id = $6 RETURNING id;
+    ended_at = $5,
+    updated_at = $6
+WHERE id = $7 RETURNING id;
 
 -- name: DeleteSub :one
 DELETE FROM subscriptions WHERE id = $1 RETURNING id;

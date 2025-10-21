@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,4 +19,5 @@ type Subscription struct {
 	StartedAt   time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	EndedAt     sql.NullTime
 }
